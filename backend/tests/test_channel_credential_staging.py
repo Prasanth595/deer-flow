@@ -18,7 +18,13 @@ from app.channels.wechat import WechatChannel
 
 def _age(path: Path) -> None:
     old = time.time() - 2 * 24 * 60 * 60
-    os.utime(path, (old, old), follow_symlinks=False)
+    if os.name == "nt":
+        # Windows raises NotImplementedError for utime(..., follow_symlinks=...)
+        # (no utimensat/lutimes support); staged files are regular files, so
+        # following the link is fine there.
+        os.utime(path, (old, old))
+    else:
+        os.utime(path, (old, old), follow_symlinks=False)
 
 
 def _load(kind: str, target: Path):
