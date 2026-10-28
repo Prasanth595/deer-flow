@@ -108,8 +108,13 @@ class Mem0Client:
         page_size: int = 200,
         max_items: int | None = None,
     ) -> list[dict[str, Any]]:
-        """List memories across pages until exhausted or ``max_items`` reached."""
+        """List until exhausted/limited; raise Mem0APIError on invalid or stalled pagination.
+
+        Allow two consecutive empty nonterminal pages for concurrent deletions.
+        """
         results: list[dict[str, Any]] = []
+        seen_next: set[str] = set()
+        empty_pages = 0
         page = 1
         while True:
             context = f"POST /v3/memories/ page={page}"
@@ -120,9 +125,19 @@ class Mem0Client:
                 params={"page": page, "page_size": page_size},
                 json={"filters": filters},
             )
-            results.extend(_memory_results(data, context=context))
-            if not data.get("next") or (max_items is not None and len(results) >= max_items):
+            records = _memory_results(data, context=context)
+            next_page = data.get("next")
+            if next_page is not None and not isinstance(next_page, str):
+                raise Mem0APIError(f"mem0 {context} next must be a string or null")
+            results.extend(records)
+            if not next_page or (max_items is not None and len(results) >= max_items):
                 return results[:max_items] if max_items is not None else results
+            empty_pages = 0 if records else empty_pages + 1
+            if empty_pages > 2 or next_page in seen_next:
+                # A successful response must make pagination progress. Never
+                # publish an incomplete listing or echo a remote continuation.
+                raise Mem0APIError(f"mem0 {context} pagination did not advance")
+            seen_next.add(next_page)
             page += 1
 
     def delete_all_memories(

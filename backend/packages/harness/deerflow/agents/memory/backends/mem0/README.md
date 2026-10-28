@@ -79,3 +79,13 @@ page; no partial context is returned. Diagnostics identify the ID field without
 echoing the invalid ID or memory content. Existing scalar and absent-ID
 handling, first-occurrence ordering, and whole-entry character budgets remain
 unchanged.
+
+Listings validate that `next` is a string or null, including before an item-limit
+return. A repeated continuation fails immediately when more items are needed.
+Up to two consecutive empty nonterminal pages are tolerated because concurrent
+deletions can empty a page; a page with records resets this allowance. A third
+consecutive empty nonterminal page fails the whole read under the configured
+policy, without returning a partial listing. Fail-open therefore returns its
+empty fallback if concurrent changes exceed that allowance; this bounded scan
+does not promise a consistent snapshot during mutation. Terminal empty pages and
+the configured item limit remain valid; continuation URLs are never followed.
