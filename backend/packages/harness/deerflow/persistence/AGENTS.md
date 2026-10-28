@@ -1,5 +1,11 @@
 # Persistence lifecycle
 
+`postgres_url.normalize_asyncpg_url` maps libpq `sslmode` to asyncpg `ssl`,
+preserving modes and credentials. Reject conflicting/repeated SSL options and
+unsupported `channel_binding`; never silently drop authentication requirements.
+`DatabaseConfig.app_sqlalchemy_url` and test fixtures share it; synchronous
+psycopg/checkpointer DSNs retain their libpq options.
+
 Postgres bootstrap owns its session-scoped advisory lock until `pg_advisory_unlock` completes. Drain that unlock across host cancellation before leaving the SQLAlchemy connection context; repeated cancellation must not return a pooled session while it still holds the bootstrap mutex. Ordinary database errors remain best-effort and are logged.
 
 Acquire that lock by polling `pg_try_advisory_lock`, never with a blocking `pg_advisory_lock`: the app engine's asyncpg `command_timeout` bounds every statement, so a blocking acquire fails a second instance's startup whenever a peer's migration outlasts it.
@@ -51,6 +57,16 @@ missing or strictly older leases remain recoverable.
 `McpTaskRepository` retains upstream poll claims' eligibility-fenced UPDATE after candidate selection, so an interleaved cancellation or competing claim is not overwritten. Cancel claims reserve the SQLite writer before SELECT; `FOR UPDATE SKIP LOCKED` alone does not serialize SQLite readers. Renewal is one owner/token/phase/expiry-fenced UPDATE and changes only lease expiry, explicitly preserving the ORM `updated_at` column. A stale generation, expired lease, terminal task or changed cancellation phase cannot renew. Keep local draining-row exclusions before LIMIT. See [control-call leases](../../../../docs/mcp-control-leases.md).
 
 ## Run terminal authority and lease expiry
+
+Run/thread creation returns committing identity snapshots; Runs mint epochs.
+Takeover/peer replacement/delete revoke; same-owner finalizers remain open.
+Lock order: local Thread → optional Change Clock → optional Extension fence →
+SQL Thread → RunRow (held through Event commit); never acquire Clock afterward.
+The INSERT trigger takes the shared cutover lock last; offline activation takes
+only its exclusive counterpart. Off-mode triggers take only the shared gate and
+recheck policy, aborting on activation; retained-snapshot isolation fails closed.
+Strict startup cannot downgrade durable policy.
+[Offline cutover](../../../../../README.md#configuration).
 
 `RunRepository.update_status(..., owner_worker_id=...)` and
 `finalize_if_not_cancelled(..., owner_worker_id=...)` require that owner and a
