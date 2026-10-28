@@ -13,6 +13,12 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
 
 ### Added
 
+- **community:** New web search provider: Desearch
+  (`deerflow.community.desearch.tools:web_search_tool`), configured with
+  `DESEARCH_API_KEY` or `api_key`; one GET /web request per search.
+  The endpoint returns up to 20 results per request; DeerFlow returns at most
+  10 (default 5).
+
 - **mcp:** Cache fully wrapped tools per unchanged server, selectively
   rediscovering only missing or changed configurations after binding
   reconciliation. Preserve successful zero-tool results separately from failures
