@@ -1481,7 +1481,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   `config.yaml` there after an edit, stalling other requests and streams
   meanwhile. The read now runs in a worker, as `/login/local` already did.
   ([#7576])
-  
+
 - **sandbox:** Stopping the Gateway no longer destroys AIO or E2B sandboxes
   before in-flight runs drain. When the first sandbox use built the provider on
   the event-loop thread, the provider's own SIGTERM/SIGINT handler destroyed
@@ -1500,7 +1500,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   `next` checks now also reject control characters: browsers delete tab, LF
   and CR from a URL, so `?next=%2F%0A%2F%2Fevil.example` could send a
   sign-in to another site. ([#7467])
-  
+
 - **authz:** Authenticated Gateway requests no longer read `config.yaml` and
   `extensions_config.json` on the event loop. Resolving route permissions
   checked both files (a `stat` and a full sha256 of each) for every request,
@@ -1577,7 +1577,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   request returned, and further `Ctrl+C` only printed a traceback. Quitting now
   says it is waiting for that step and closes when it finishes; press `Ctrl+C`
   again to quit at once. ([#7326])
-  
+
 - **tui:** The streamed transcript no longer drops tokens that repeat or extend
   the text already shown. Deltas were merged by prefix, so `ha` + `ha` rendered
   as `ha`, `1` + `10` as `10`, and an answer that opened with a Markdown marker
@@ -1588,7 +1588,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   (a dead cached client or a warm-pool VM reaped while parked). The lease was
   kept and renewed until Gateway shutdown, so every reaped VM left a tracked
   ID and a renewed ownership key behind. ([#7277])
-  
+
 - **auth:** SSO login and callback no longer fail with a `500` when the OIDC
   provider answers `200` with a body that is not the expected JSON object, such
   as a maintenance HTML page. Discovery, token, JWKS and UserInfo bodies, a
@@ -2287,7 +2287,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   `channel_conversations` / `channel_thread_bindings`: the instance that loses
   adopts the winner's thread and deletes its own empty one, and `/new` still
   rebinds. (issue #7103, [#7104])
-  
+
 - **skills:** A skill the agent creates, edits, patches or deletes with the
   `skill_manage` tool now reaches every Gateway process sharing the home
   volume, as a change made through the skills API already did. The tool
@@ -2299,14 +2299,14 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   this or a peer process serving the stale list. When the marker cannot be
   written, the tool reports that the change was applied but other processes
   were not notified, instead of reading as a failed write. ([#7099])
-  
+
 - **provisioner:** When two provisioner replicas start together and
   `K8S_NAMESPACE` does not exist yet, the one that loses the create race no
   longer crashes at startup: its `409 AlreadyExists` now counts as the
   namespace existing, as the Pod and Service creates already did. Helm
   deployments, where the provisioner runs inside the namespace it manages,
   never took this path. ([#7099])
-  
+
 - **projects:** A shelf upload or save-from-thread into a project the caller
   cannot write no longer leaves a directory behind or answers `500`. Both
   routes staged the body under `users/{user_id}/projects/{project_id}/` before
@@ -2316,7 +2316,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   now check for an owned, active project first and answer the same `404`
   without writing; the shelf insert still re-checks under the project row lock.
   ([#7040])
-  
+
 - **skills:** Toggling a skill when no `extensions_config.json` exists yet now
   creates the file in the project root (`DEER_FLOW_PROJECT_ROOT`, else the
   working directory), where the MCP editor already creates it and where config
@@ -2337,7 +2337,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   cancellation, faults and worker exits every 20 ms) without exchanging frames,
   so idle waits no longer consume turns and `timeout_seconds` is the only wall-clock bound;
   scripts that spin the job queue still hit the turn cap. (issue [#7022], [#7024])
-  
+
 - **browser:** `browser_screenshot` no longer replaces a file that already
   exists in the thread's outputs directory. A screenshot saved as
   `report.png` used to overwrite the user's own `report.png`, an earlier
@@ -7124,7 +7124,7 @@ As of 2026-10-21, the milestone includes **829 merged pull requests**.
   the absolute host path of the thread's uploads directory, including the user
   and thread IDs. They now return `Failed to upload <name>.` /
   `Failed to delete <name>.`, and the full error stays in the Gateway log. ([#7217])
-  
+
 - **agents:** The custom-agent and user-profile routes no longer put the raw
   exception text in their `500` detail. An unparsable agent `config.yaml` or a
   filesystem error (`[Errno 13]` and the like) made them answer with the
